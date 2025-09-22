@@ -687,9 +687,10 @@ fun Lyrics(
                         }
                     }
 
-                    WordSyncedLyrics(
+                    AppleStyleLyrics(
                         manager = wordSyncedManager!!,
-                        isVisible = isDisplayed
+                        isVisible = isDisplayed,
+                        isFullScreen = true
                     )
                 }
 
@@ -840,6 +841,8 @@ fun Lyrics(
                                             setShouldShowSynchronizedLyrics(!shouldShowSynchronizedLyrics)
                                         }
                                     )
+
+                                    // Karaoke/Apple style now default: no toggle needed
 
                                     MenuEntry(
                                         icon = R.drawable.pencil,

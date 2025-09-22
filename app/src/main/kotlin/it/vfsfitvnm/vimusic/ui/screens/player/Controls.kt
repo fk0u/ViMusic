@@ -137,6 +137,16 @@ private fun ClassicControls(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
+            // Lyrics toggle button (new)
+            IconButton(
+                icon = R.drawable.ic_lyrics,
+                color = if (PlayerPreferences.isShowingLyrics) colorPalette.accent else colorPalette.text,
+                onClick = { PlayerPreferences.isShowingLyrics = !PlayerPreferences.isShowingLyrics },
+                modifier = Modifier
+                    .weight(1f)
+                    .size(24.dp)
+            )
+
             IconButton(
                 icon = if (likedAt == null) R.drawable.heart_outline else R.drawable.heart,
                 color = colorPalette.favoritesIcon,
@@ -251,13 +261,25 @@ private fun ModernControls(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(if (PlayerPreferences.showLike) 4.dp else 8.dp)
         ) {
+            // Lyrics button for modern layout – placed at start
+            val (colorPalette) = LocalAppearance.current
+            BigIconButton(
+                iconId = R.drawable.ic_lyrics,
+                onClick = { PlayerPreferences.isShowingLyrics = !PlayerPreferences.isShowingLyrics },
+                modifier = Modifier.weight(1f),
+                contentColor = if (PlayerPreferences.isShowingLyrics) colorPalette.accent else colorPalette.text
+            )
+
             if (PlayerPreferences.showLike) previousButtonContent()
             PlayButton(
                 radius = playButtonRadius,
                 shouldBePlaying = shouldBePlaying,
                 modifier = Modifier
                     .height(controlHeight)
-                    .weight(if (PlayerPreferences.showLike) 3f else 4f)
+                    .weight(
+                        // Adjust weight because we added lyrics button occupying 1f
+                        if (PlayerPreferences.showLike) 3f else 4f
+                    )
             )
             SkipButton(
                 iconId = R.drawable.play_skip_forward,

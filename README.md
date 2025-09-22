@@ -17,7 +17,8 @@
 </p>
 
 #### ⭐ Fork-Exclusive Features
-* 🎤 **Word-Level Synced Lyrics:** Real-time, per-word highlighting for a true karaoke experience.
+* 🎤 **Apple Music-Style Lyrics:** Full-screen immersive experience with per-word highlighting, subtle background effects, and smooth animations.
+* 🎶 **Word-Level Synced Lyrics:** Real-time, per-word highlighting for a true karaoke experience.
 * ↔️ **Generic Playlist Import:** Import your playlists from any source that can export to a `.csv` file.
 * 💾 **Intelligent Lyrics Caching:** Word-level lyrics are cached locally to save data and reduce loading times.
 * 🚀 **Enhanced Reliability:** Uses the battle-tested **NewPipeExtractor** engine for fetching music streams.
@@ -42,6 +43,24 @@
 alt="Get it on GitHub"
 height="80"
 align="center">](https://github.com/Jigen-Ohtsusuki/ViMusic/releases/latest)
+
+## Apple Music-Style Lyrics Experience
+
+This fork introduces a premium Apple Music-inspired lyrics experience with the following enhancements:
+
+* **Immersive Full-Screen Mode**: Dedicated full-screen experience with animated gradient backdrop
+* **Sharp Word Highlighting**: Left-to-right solid fill highlighting instead of gradient wipe for clearer visual tracking
+* **Text Emphasis**: Active lines are emphasized with scaling and font weight changes
+* **Subtle Glow Effects**: Active words receive subtle shadow effects for better visibility
+* **Vertical Positioning**: Dynamic vertical alignment to position active lyrics at the optimal reading position
+* **Smooth Animations**: Enhanced easing curves for smoother transitions between lines
+
+To use this feature:
+1. Play a song with synchronized lyrics available
+2. Tap the lyrics button in the player controls
+3. Enjoy the immersive full-screen lyrics experience
+
+The feature works best with word-synced lyrics from LyricsPlus provider, but also supports line-synced lyrics.
 
 ## Acknowledgments
 
