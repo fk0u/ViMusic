@@ -228,22 +228,31 @@ private fun ModernControls(
     controlHeight: Dp = 64.dp
 ) {
     val previousButtonContent: @Composable RowScope.() -> Unit = {
-        SkipButton(
-            iconId = R.drawable.play_skip_back,
+        androidx.compose.material3.IconButton(
             onClick = binder.player::forceSeekToPrevious,
-            modifier = Modifier.weight(1f),
-            offsetOnPress = -DefaultOffset
-        )
+            modifier = Modifier.weight(1f)
+        ) {
+            androidx.compose.material3.Icon(
+                painter = painterResource(id = R.drawable.play_skip_back),
+                contentDescription = "Previous",
+                tint = LocalAppearance.current.colorPalette.text
+            )
+        }
     }
 
     val likeButtonContent: @Composable RowScope.() -> Unit = {
-        BigIconButton(
-            iconId = if (likedAt == null) R.drawable.heart_outline else R.drawable.heart,
+        androidx.compose.material3.IconButton(
             onClick = {
                 setLikedAt(if (likedAt == null) System.currentTimeMillis() else null)
             },
             modifier = Modifier.weight(1f)
-        )
+        ) {
+            androidx.compose.material3.Icon(
+                painter = painterResource(id = if (likedAt == null) R.drawable.heart_outline else R.drawable.heart),
+                contentDescription = "Like",
+                tint = LocalAppearance.current.colorPalette.favoritesIcon
+            )
+        }
     }
 
     Column(
@@ -263,12 +272,16 @@ private fun ModernControls(
         ) {
             // Lyrics button for modern layout – placed at start
             val (colorPalette) = LocalAppearance.current
-            BigIconButton(
-                iconId = R.drawable.ic_lyrics,
+            androidx.compose.material3.IconButton(
                 onClick = { PlayerPreferences.isShowingLyrics = !PlayerPreferences.isShowingLyrics },
-                modifier = Modifier.weight(1f),
-                contentColor = if (PlayerPreferences.isShowingLyrics) colorPalette.accent else colorPalette.text
-            )
+                modifier = Modifier.weight(1f)
+            ) {
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.ic_lyrics),
+                    contentDescription = "Toggle Lyrics",
+                    tint = if (PlayerPreferences.isShowingLyrics) colorPalette.accent else colorPalette.text
+                )
+            }
 
             if (PlayerPreferences.showLike) previousButtonContent()
             PlayButton(
@@ -321,19 +334,23 @@ private fun SkipButton(
         targetValue = if (pressed) offsetOnPress else 0.dp,
         label = ""
     )
+    
+    val colorPalette = LocalAppearance.current.colorPalette
 
-    BigIconButton(
-        iconId = iconId,
+    androidx.compose.material3.IconButton(
+        onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
             .offset {
                 IntOffset(x = offset.roundToPx(), y = 0)
             }
-    )
+    ) {
+        androidx.compose.material3.Icon(
+            painter = painterResource(id = iconId),
+            contentDescription = null,
+            tint = colorPalette.text
+        )
+    }
 }
 
 @Composable
@@ -345,22 +362,23 @@ private fun PlayButton(
     val (colorPalette) = LocalAppearance.current
     val binder = LocalPlayerServiceBinder.current
 
-    Box(
-        modifier = modifier
-            .clip(radius.roundedShape)
-            .clickable {
-                if (shouldBePlaying) binder?.player?.pause() else {
-                    if (binder?.player?.playbackState == Player.STATE_IDLE) binder.player.prepare()
-                    binder?.player?.play()
-                }
+    androidx.compose.material3.FilledIconButton(
+        onClick = {
+            if (shouldBePlaying) binder?.player?.pause() else {
+                if (binder?.player?.playbackState == Player.STATE_IDLE) binder.player.prepare()
+                binder?.player?.play()
             }
-            .background(colorPalette.accent)
+        },
+        modifier = modifier,
+        shape = radius.roundedShape,
+        colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+            containerColor = colorPalette.accent,
+            contentColor = colorPalette.onAccent
+        )
     ) {
         AnimatedPlayPauseButton(
             playing = shouldBePlaying,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(32.dp)
+            modifier = Modifier.size(32.dp)
         )
     }
 }

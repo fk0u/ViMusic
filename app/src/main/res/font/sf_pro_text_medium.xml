@@ -1,0 +1,4 @@
+<!-- Font Medium: roboto medium ditempatkan sebagai placeholder untuk SF Pro Text Medium -->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font app:fontStyle="normal" app:fontWeight="500" app:font="@font/roboto_medium" />
+</font-family>

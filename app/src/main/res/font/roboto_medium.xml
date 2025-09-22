@@ -1,0 +1,4 @@
+<!-- Font Medium: poppins medium as fallback for Roboto Medium -->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font app:fontStyle="normal" app:fontWeight="500" app:font="@font/poppins_w500" />
+</font-family>

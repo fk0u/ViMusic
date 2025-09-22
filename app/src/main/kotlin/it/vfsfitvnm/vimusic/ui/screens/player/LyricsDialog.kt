@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -117,18 +119,24 @@ fun LyricsDialog(
                     .blur(radius = 8.dp)
             )
 
-            Lyrics(
-                mediaId = currentWindow.mediaItem.mediaId,
-                isDisplayed = true,
-                onDismiss = { },
-                mediaMetadataProvider = currentWindow.mediaItem::mediaMetadata,
-                durationProvider = player::getDuration,
-                ensureSongInserted = { Database.instance.insert(currentWindow.mediaItem) },
-                onMenuLaunch = onDismiss,
-                modifier = Modifier.height(maxHeight),
-                shouldKeepScreenAwake = false, // otherwise the keepScreenOn flag resets after dialog closes
-                shouldUpdateLyrics = false
-            )
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                tonalElevation = 4.dp
+            ) {
+                Lyrics(
+                    mediaId = currentWindow.mediaItem.mediaId,
+                    isDisplayed = true,
+                    onDismiss = { },
+                    mediaMetadataProvider = currentWindow.mediaItem::mediaMetadata,
+                    durationProvider = player::getDuration,
+                    ensureSongInserted = { Database.instance.insert(currentWindow.mediaItem) },
+                    onMenuLaunch = onDismiss,
+                    modifier = Modifier.height(maxHeight),
+                    shouldKeepScreenAwake = false, // otherwise the keepScreenOn flag resets after dialog closes
+                    shouldUpdateLyrics = false
+                )
+            }
         }
     }
 }

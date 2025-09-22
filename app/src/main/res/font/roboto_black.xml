@@ -1,0 +1,4 @@
+<!-- Font Black: poppins black (using w700 since we don't have w900) as fallback for Roboto Black -->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font app:fontStyle="normal" app:fontWeight="900" app:font="@font/poppins_w700" />
+</font-family>

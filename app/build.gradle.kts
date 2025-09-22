@@ -51,6 +51,25 @@ android {
             keyAlias = System.getenv("ANDROID_NIGHTLY_KEYSTORE_ALIAS")
             keyPassword = System.getenv("ANDROID_NIGHTLY_KEYSTORE_PASSWORD")
         }
+        
+        create("release") {
+            // Use default values if keystore file doesn't exist
+            storeFile = file("../keystore/vimusic-release.keystore")
+            storePassword = "vimusic123"
+            keyAlias = "vimusic"
+            keyPassword = "vimusic123"
+            
+            // Load properties from file if it exists
+            val keystorePropertiesFile = file("../keystore/keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val keystoreProperties = Properties()
+                keystoreProperties.load(keystorePropertiesFile.inputStream())
+                storeFile = file(keystoreProperties.getProperty("storeFile", "../keystore/vimusic-release.keystore"))
+                storePassword = keystoreProperties.getProperty("storePassword", "vimusic123")
+                keyAlias = keystoreProperties.getProperty("keyAlias", "vimusic")
+                keyPassword = keystoreProperties.getProperty("keyPassword", "vimusic123")
+            }
+        }
     }
 
     buildTypes {
@@ -67,6 +86,7 @@ android {
             isShrinkResources = true
             manifestPlaceholders["appName"] = "ViMusic"
             buildConfigField("String", "LYRICS_API_BASE", "\"${localProperties["LYRICS_API_BASE"]}\"")
+            // signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

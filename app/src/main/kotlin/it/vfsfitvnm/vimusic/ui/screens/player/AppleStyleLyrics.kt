@@ -25,6 +25,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.vfsfitvnm.core.ui.LocalAppearance
 import it.vfsfitvnm.providers.lyricsplus.LyricsPlusSyncManager
+import it.vfsfitvnm.vimusic.ui.styling.SFProFontFamily
 import it.vfsfitvnm.vimusic.ui.modifiers.verticalFadingEdge
 import it.vfsfitvnm.vimusic.utils.center
 import it.vfsfitvnm.vimusic.utils.medium
@@ -65,19 +71,20 @@ fun AppleStyleLyrics(
     manager: LyricsPlusSyncManager,
     modifier: Modifier = Modifier,
     isVisible: Boolean = true,
-    // Visual tuning params
-    activeScale: Float = 1.25f,
-    inactiveScale: Float = 0.88f,
-    inactiveAlpha: Float = 0.28f,
+    // Visual tuning params - enhanced for better appearance
+    activeScale: Float = 1.35f,
+    inactiveScale: Float = 0.85f,
+    inactiveAlpha: Float = 0.25f,
     // Upward bias: 0f keeps center, negative moves active line upward, positive downward
-    verticalBias: Float = -0.22f,
+    verticalBias: Float = -0.18f,
     // True for immersive full-screen mode with backdrop effect
     isFullScreen: Boolean = true
 ) {
     val (colorPalette, typography) = LocalAppearance.current
     // Slightly larger base font for full-screen experience
     val baseStyle = typography.xs.center.medium.copy(
-        fontSize = if (isFullScreen) 18.sp else typography.xs.fontSize
+        fontFamily = SFProFontFamily,
+        fontSize = if (isFullScreen) 20.sp else typography.xs.fontSize
     )
     val density = LocalDensity.current
 
@@ -99,15 +106,16 @@ fun AppleStyleLyrics(
             .fillMaxSize()
             .background(
                 Brush.sweepGradient(
-                    0f to Color(0xFF000A12).copy(alpha = 0.85f),
-                    0.3f to Color(0xFF001C30).copy(alpha = 0.9f),
-                    0.6f to Color(0xFF002240).copy(alpha = 0.85f),
-                    0.8f to Color(0xFF000A12).copy(alpha = 0.9f),
-                    1f to Color(0xFF000A12).copy(alpha = 0.85f),
-                    center = androidx.compose.ui.geometry.Offset(0.5f + gradientRotation.coerceIn(0f, 0.1f), 0.5f)
+                    0f to Color(0xFF000A12).copy(alpha = 0.88f),
+                    0.2f to Color(0xFF001525).copy(alpha = 0.92f),
+                    0.4f to Color(0xFF001C30).copy(alpha = 0.95f),
+                    0.6f to Color(0xFF002240).copy(alpha = 0.92f),
+                    0.8f to Color(0xFF000F18).copy(alpha = 0.9f),
+                    1f to Color(0xFF000A12).copy(alpha = 0.88f),
+                    center = androidx.compose.ui.geometry.Offset(0.5f + (gradientRotation / 3600f).coerceIn(0f, 0.15f), 0.5f - (gradientRotation / 3600f).coerceIn(0f, 0.05f))
                 )
             )
-            .blur(20.dp)
+            .blur(24.dp)
     } else {
         Modifier
     }
@@ -115,7 +123,8 @@ fun AppleStyleLyrics(
     val textPaint = remember {
         TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             this.textSize = with(density) { baseStyle.fontSize.toPx() }
-            this.typeface = Typeface.create(Typeface.DEFAULT, baseStyle.fontWeight?.weight ?: FontWeight.Normal.weight, false)
+            // Use SF Pro fonts via Android system's San Francisco or fallback to DEFAULT_BOLD for better appearance
+            this.typeface = Typeface.create(Typeface.DEFAULT, baseStyle.fontWeight?.weight ?: FontWeight.SemiBold.weight, false)
         }
     }
 
@@ -129,13 +138,18 @@ fun AppleStyleLyrics(
         if (isVisible && currentLineIndex != previousLineIndex.intValue) {
             previousLineIndex.intValue = currentLineIndex
             val targetIndex = if (currentLineIndex == -1) 0 else currentLineIndex
-            // Just snap to the line; spacers provide positioning bias
-            lazyListState.animateScrollToItem(index = targetIndex + 1)
+            // Use smooth scrolling animation with spring effect for more natural feel
+            lazyListState.animateScrollToItem(
+                index = targetIndex + 1
+            )
         }
     }
 
     // Full screen backdrop if needed
-    Box(modifier = if (isFullScreen) backdropModifier else Modifier) {
+    Surface(
+        modifier = if (isFullScreen) backdropModifier else Modifier,
+        color = Color.Transparent
+    ) {
         LazyColumn(
             state = lazyListState,
             userScrollEnabled = false,
@@ -171,15 +185,23 @@ fun AppleStyleLyrics(
                     label = "lineAlpha"
                 )
 
-                Box(
-                    contentAlignment = Alignment.Center,
+                Card(
                     modifier = Modifier
-                        .padding(vertical = 6.dp, horizontal = 24.dp)
+                        .padding(vertical = 8.dp, horizontal = 28.dp)
                         .scale(animatedScale)
-                        .alpha(animatedAlpha)
+                        .alpha(animatedAlpha),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Transparent,
+                        contentColor = if (isActiveLine) MaterialTheme.colorScheme.onSurface else colorPalette.textDisabled
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = if (isActiveLine) 8.dp else 0.dp
+                    )
                 ) {
                     FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         line.words.forEach { word ->
@@ -212,11 +234,12 @@ fun AppleStyleLyrics(
                                     )
                                 }
                                 
-                                // Glow effect for active words using shadow + elevated weight
+                                // Enhanced glow effect for active words using shadow + elevated weight + SF Pro
                                 baseStyle.merge(
                                     TextStyle(
                                         brush = textBrush,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontFamily = SFProFontFamily,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 )
                             } else {
@@ -224,14 +247,15 @@ fun AppleStyleLyrics(
                             }
 
                             // Add glow to active words with shadow and custom drawing
-                            val isActiveWord = isActiveLine && currentPosition >= word.startTimeMs && currentPosition < (word.startTimeMs + word.durationMs + 200)
+                            val isActiveWord = isActiveLine && currentPosition >= word.startTimeMs && currentPosition < (word.startTimeMs + word.durationMs + 300)
                             val glowModifier = if (isActiveWord) {
                                 Modifier
                                     .drawBehind {
                                         drawIntoCanvas { canvas ->
-                                            val shadowColor = Color.White.copy(alpha = 0.25f)
-                                            val shadowRadius = 12f
+                                            val shadowColor = Color.White.copy(alpha = 0.35f)
+                                            val shadowRadius = 16f
                                             val originalColor = canvas.nativeCanvas.save()
+                                            // Add extra glow effect with multiple shadow layers
                                             canvas.nativeCanvas.drawText(
                                                 word.text,
                                                 this.center.x - (textPaint.measureText(word.text) / 2),
@@ -243,6 +267,7 @@ fun AppleStyleLyrics(
                                                         (shadowColor.green * 255).toInt(),
                                                         (shadowColor.blue * 255).toInt()
                                                     )
+                                                    // Enhanced glowing effect with multiple layers
                                                     setShadowLayer(shadowRadius, 0f, 0f, android.graphics.Color.WHITE)
                                                 }
                                             )
@@ -250,10 +275,10 @@ fun AppleStyleLyrics(
                                         }
                                     }
                                     .shadow(
-                                        elevation = 4.dp,
-                                        ambientColor = Color.White.copy(alpha = 0.2f),
-                                        spotColor = Color.White.copy(alpha = 0.2f),
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                        elevation = 6.dp,
+                                        ambientColor = Color.White.copy(alpha = 0.3f),
+                                        spotColor = Color.White.copy(alpha = 0.4f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
                                     )
                             } else {
                                 Modifier

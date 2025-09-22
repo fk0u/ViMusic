@@ -29,6 +29,26 @@ object LyricsCacheManager {
         }
     }
 
+    /**
+     * Get the cached lyrics for a song
+     * @param context Android context
+     * @param songId The song ID to retrieve lyrics for
+     * @return The cached lyrics as a string, or null if not found
+     */
+    fun get(context: Context, songId: String): String? {
+        val cacheFile = getCacheFileForSong(context, songId)
+        return if (cacheFile.exists() && cacheFile.canRead()) {
+            try {
+                cacheFile.readText()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else {
+            null
+        }
+    }
+
     fun clear(context: Context): Boolean {
         return try {
             getCacheDir(context).deleteRecursively()

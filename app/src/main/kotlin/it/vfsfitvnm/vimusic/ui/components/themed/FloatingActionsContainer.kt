@@ -27,6 +27,7 @@ import it.vfsfitvnm.vimusic.R
 import it.vfsfitvnm.vimusic.utils.ScrollingInfo
 import it.vfsfitvnm.vimusic.utils.scrollingInfo
 import it.vfsfitvnm.vimusic.utils.smoothScrollToTop
+import it.vfsfitvnm.core.ui.LocalAppearance
 import kotlinx.coroutines.launch
 
 @Composable
@@ -127,20 +128,27 @@ private fun BoxScope.FloatingActions(
             enter = slideInVertically(tween(500, if (icon == null) 0 else 100)) { it },
             exit = slideOutVertically(tween(500, 0)) { it }
         ) {
-            SecondaryButton(
+            androidx.compose.material3.FloatingActionButton(
                 onClick = {
                     coroutineScope.launch { onScrollToTop() }
                 },
-                iconId = scrollIcon ?: R.drawable.chevron_up,
                 modifier = Modifier
                     .padding(bottom = 16.dp)
-                    .padding(bottomPaddingValues)
-            )
+                    .padding(bottomPaddingValues),
+                containerColor = LocalAppearance.current.colorPalette.background2,
+                contentColor = LocalAppearance.current.colorPalette.text
+            ) {
+                androidx.compose.material3.Icon(
+                    painter = androidx.compose.ui.res.painterResource(id = scrollIcon ?: R.drawable.chevron_up),
+                    contentDescription = "Scroll to Top"
+                )
+            }
         }
     }
 
-    icon?.let {
-        onClick?.let {
+    icon?.let { iconRes ->
+        if (onClick != null) {
+            val clickAction = onClick
             transition.AnimatedVisibility(
                 visible = { it?.isScrollingDown == false },
                 enter = slideInVertically(
@@ -152,14 +160,21 @@ private fun BoxScope.FloatingActions(
                     targetOffsetY = { it }
                 )
             ) {
-                PrimaryButton(
-                    icon = icon,
-                    onClick = onClick,
-                    enabled = transition.targetState?.isScrollingDown == false,
+                val clickable = transition.targetState?.isScrollingDown == false
+                val onClickLambda: () -> Unit = if (clickable) clickAction else ({})
+                androidx.compose.material3.FloatingActionButton(
+                    onClick = onClickLambda,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
-                        .padding(bottomPaddingValues)
-                )
+                        .padding(bottomPaddingValues),
+                    containerColor = LocalAppearance.current.colorPalette.accent.copy(alpha = if (clickable) 1f else 0.6f),
+                    contentColor = LocalAppearance.current.colorPalette.onAccent
+                ) {
+                    androidx.compose.material3.Icon(
+                        painter = androidx.compose.ui.res.painterResource(id = iconRes),
+                        contentDescription = null
+                    )
+                }
             }
         }
     }

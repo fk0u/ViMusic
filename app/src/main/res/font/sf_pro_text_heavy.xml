@@ -1,0 +1,4 @@
+<!-- Font Black: roboto black ditempatkan sebagai placeholder untuk SF Pro Text Heavy -->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font app:fontStyle="normal" app:fontWeight="900" app:font="@font/roboto_black" />
+</font-family>

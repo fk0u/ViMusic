@@ -384,22 +384,33 @@ fun Queue(
                                             alignment = Alignment.End
                                         )
                                     ) {
-                                        IconButton(
-                                            icon = R.drawable.play_skip_forward,
-                                            color = colorPalette.text,
+                                        androidx.compose.material3.IconButton(
                                             onClick = {
                                                 binder.player.addNext(it)
                                             },
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        IconButton(
-                                            icon = R.drawable.enqueue,
-                                            color = colorPalette.text,
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            androidx.compose.material3.Icon(
+                                                painter = painterResource(id = R.drawable.play_skip_forward),
+                                                contentDescription = "Play Next",
+                                                tint = colorPalette.text,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                        
+                                        androidx.compose.material3.IconButton(
                                             onClick = {
                                                 binder.player.enqueue(it)
                                             },
-                                            modifier = Modifier.size(18.dp)
-                                        )
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            androidx.compose.material3.Icon(
+                                                painter = painterResource(id = R.drawable.enqueue),
+                                                contentDescription = "Add to Queue",
+                                                tint = colorPalette.text,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                 }
                             )

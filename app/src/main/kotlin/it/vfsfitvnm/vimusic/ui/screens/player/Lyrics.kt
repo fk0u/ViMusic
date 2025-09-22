@@ -32,6 +32,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -87,13 +99,11 @@ import it.vfsfitvnm.vimusic.query
 import it.vfsfitvnm.vimusic.service.LOCAL_KEY_PREFIX
 import it.vfsfitvnm.vimusic.transaction
 import it.vfsfitvnm.vimusic.ui.components.LocalMenuState
-import it.vfsfitvnm.vimusic.ui.components.themed.CircularProgressIndicator
-import it.vfsfitvnm.vimusic.ui.components.themed.DefaultDialog
 import it.vfsfitvnm.vimusic.ui.components.themed.Menu
 import it.vfsfitvnm.vimusic.ui.components.themed.MenuEntry
-import it.vfsfitvnm.vimusic.ui.components.themed.TextField
-import it.vfsfitvnm.vimusic.ui.components.themed.TextFieldDialog
 import it.vfsfitvnm.vimusic.ui.components.themed.TextPlaceholder
+import it.vfsfitvnm.vimusic.ui.components.themed.TextFieldDialog
+import it.vfsfitvnm.vimusic.ui.components.themed.DefaultDialog
 import it.vfsfitvnm.vimusic.ui.components.themed.ValueSelectorDialogBody
 import it.vfsfitvnm.vimusic.ui.modifiers.verticalFadingEdge
 import it.vfsfitvnm.vimusic.utils.LyricsCacheManager
@@ -116,54 +126,88 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
-private const val UPDATE_DELAY = 50L
+// Update delay in milliseconds for lyrics synchronization
+private val UPDATE_DELAY = 50.milliseconds
+
+// Cache for word-synced lyrics managers
 private val wordSyncCache = mutableMapOf<String, LyricsPlusSyncManager>()
 
-// Helper function to check if text is word-level JSON
+/**
+ * Check if the lyrics text is in word-level JSON format
+ * @param text The lyrics text to check
+ * @return True if the text is in word-level JSON format, false otherwise
+ */
 private fun isWordLevelJson(text: String?): Boolean {
     if (text.isNullOrBlank()) return false
-    val trimmed = text.trim()
-    return trimmed.startsWith("[") && trimmed.endsWith("]") &&
-        trimmed.length > 10 && // More robust check
-        !trimmed.contains('\n') &&
-        trimmed.contains("words") // Additional check for word-level structure
+    
+    return try {
+        // Try to parse as JSON and check if it has the expected structure
+        val json = Json.parseToJsonElement(text).jsonObject
+        json.keys.any { it == "lyrics" || it == "lines" } && (
+            json["lyrics"]?.jsonArray != null || json["lines"]?.jsonArray != null
+        )
+    } catch (e: Exception) {
+        false
+    }
 }
 
-// Helper function to check for LRC format to prevent flicker
+/**
+ * Check if the lyrics text is in LRC format
+ * @param text The lyrics text to check
+ * @return True if the text is in LRC format, false otherwise
+ */
 private fun isLrcFormat(text: String?): Boolean {
     if (text.isNullOrBlank()) return false
-    // A simple but effective heuristic: check for the presence of a timestamp tag.
-    return text.contains(Regex("\\[\\d{2}:\\d{2}[.:]\\d{2,3}]"))
+    
+    // Check if the text contains time tags like [mm:ss.xx]
+    val lrcTimeTagRegex = "\\[\\d{2}:\\d{2}\\.\\d{2,3}\\]".toRegex()
+    return lrcTimeTagRegex.find(text) != null
 }
 
-// Helper function to safely parse word-level lyrics
-private fun parseWordLevelLyrics(jsonText: String): List<LyricLine>? {
+/**
+ * Parse word-level lyrics from JSON string
+ * @param jsonString The JSON string containing word-level lyrics
+ * @return A list of LyricLine objects, or null if parsing fails
+ */
+private fun parseWordLevelLyrics(jsonString: String): List<LyricLine>? {
     return try {
-        val parsed = Json.decodeFromString<List<LyricLine>>(jsonText)
-        // Validate it has actual word data
-        if (parsed.any { it.words.isNotEmpty() }) parsed else null
+        Json.decodeFromString<List<LyricLine>>(jsonString)
     } catch (e: Exception) {
-        e.printStackTrace()
-        null
+        try {
+            // Try alternate format
+            val json = Json.parseToJsonElement(jsonString).jsonObject
+            if (json.containsKey("lyrics")) {
+                Json.decodeFromString<List<LyricLine>>(json["lyrics"].toString())
+            } else if (json.containsKey("lines")) {
+                Json.decodeFromString<List<LyricLine>>(json["lines"].toString())
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 }
 
-// Check cached word-level lyrics first
+/**
+ * Get cached word-level lyrics from the device
+ * @param context Android context
+ * @param mediaId The media ID to retrieve lyrics for
+ * @return A list of LyricLine objects if found in cache, null otherwise
+ */
 private fun getCachedWordLevelLyrics(context: android.content.Context, mediaId: String): List<LyricLine>? {
-    return try {
-        val cacheFile = File(File(context.cacheDir, "lyrics"), "${mediaId}_word.json")
-        if (cacheFile.exists()) {
-            val jsonText = cacheFile.readText()
-            parseWordLevelLyrics(jsonText)
-        } else null
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
-    }
+    val cachedJson = LyricsCacheManager.get(context, mediaId) ?: return null
+    return parseWordLevelLyrics(cachedJson)
 }
 
 @Composable
@@ -655,7 +699,7 @@ fun Lyrics(
                 val file = syncedText?.let { LrcParser.parse(it)?.toLrcFile() }
                 SynchronizedLyricsState(
                     sentences = file?.lines,
-                    offset = file?.offset?.inWholeMilliseconds ?: 0L
+                    offset = file?.offset?.toDouble(DurationUnit.MILLISECONDS)?.toLong() ?: 0L
                 )
             }
         }
@@ -665,8 +709,11 @@ fun Lyrics(
             lyricsState.sentences?.let {
                 SynchronizedLyrics(it.toImmutableMap()) {
                     binder?.player?.let { player ->
-                        player.currentPosition + UPDATE_DELAY + lyricsState.offset -
-                            (lyrics?.startTime ?: 0L)
+                        val currentPosition: Long = player.currentPosition
+                        val updateDelayMs: Long = UPDATE_DELAY.toDouble(DurationUnit.MILLISECONDS).toLong()
+                        val offset: Long = lyricsState.offset
+                        val startTime: Long = lyrics?.startTime ?: 0L
+                        currentPosition + updateDelayMs + offset - startTime
                     } ?: 0L
                 }
             }
@@ -1021,12 +1068,11 @@ fun LrcLibSearchDialog(
                     onDismiss()
                 }
             },
-            valueText = {
-                "${it.artistName} - ${it.trackName} (${
-                    it.duration.seconds.toComponents { minutes, seconds, _ ->
-                        "$minutes:${seconds.toString().padStart(2, '0')}"
-                    }
-                })"
+            valueText = { track ->
+                val seconds = track.duration.toInt()
+                val minutes = seconds / 60
+                val remainingSeconds = seconds % 60
+                "${track.artistName} - ${track.trackName} ($minutes:${remainingSeconds.toString().padStart(2, '0')})"
             }
         )
     }

@@ -1,0 +1,4 @@
+<!-- Font Bold: roboto bold ditempatkan sebagai placeholder untuk SF Pro Text Bold -->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font app:fontStyle="normal" app:fontWeight="700" app:font="@font/roboto_bold" />
+</font-family>
